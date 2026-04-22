@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wellcome Harmony — Petfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ✅ Supabase JS SDK (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  /* ─── TOKENS ─────────────────────────────────────── */
+  :root {
+    --sky:      #d4eef9;
+    --sky2:     #b8e0f5;
+    --sun:      #ffd166;
+    --coral:    #ff6b6b;
+    --mint:     #06d6a0;
+    --lavender: #c3b1e1;
+    --cream:    #fff8f0;
+    --bldg-H:   #f4a261;
+    --bldg-G:   #e76f51;
+    --bldg-F:   #457b9d;
+    --wall-H:   #e8956d;
+    --wall-G:   #d4623d;
+    --wall-F:   #3a6a8a;
+    --win-day:  #fffde7;
+    --win-lit:  #ffe066;
+    --win-pet:  #c8f7c5;
+    --ground:   #5a7c4f;
+    --ground2:  #3d5c34;
+    --text:     #2d2d2d;
+    --white:    #ffffff;
+    --shadow:   rgba(0,0,0,.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─────────────────────────────────────── */
+  header {
+    text-align: center;
+    padding: 28px 20px 12px;
+    position: relative;
+    z-index: 10;
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    color: var(--bldg-G);
+    letter-spacing: 1px;
+    text-shadow: 3px 3px 0 var(--sun);
+    animation: bounceIn .7s ease;
+  }
+  header p {
+    font-size: 1rem;
+    color: #555;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+  .header-pets {
+    font-size: 1.6rem;
+    margin-top: 2px;
+    animation: wiggle 3s infinite;
+    display: inline-block;
+  }
+  @keyframes wiggle { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+  @keyframes bounceIn {
+    0%{transform:scale(.5);opacity:0}80%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}
+  }
+
+  /* ─── STATUS BAR ──────────────────────────────────── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #777;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background .3s;
+  }
+  .status-dot.online  { background: var(--mint); box-shadow: 0 0 6px var(--mint); }
+  .status-dot.offline { background: var(--coral); }
+  .status-dot.loading { background: var(--sun); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ─── ADD BUTTON ─────────────────────────────────── */
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--coral);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin: 14px auto 0;
+    box-shadow: 0 4px 0 #c0392b, 0 6px 16px rgba(255,107,107,.35);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #c0392b, 0 10px 20px rgba(255,107,107,.4); }
+  .add-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c0392b; }
+  .add-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  /* ─── SKY ─────────────────────────────────────────── */
+  .sky-deco {
+    position: relative;
+    width: 100%;
+    height: 90px;
+    overflow: hidden;
+  }
+  .cloud {
+    position: absolute;
+    background: #fff;
+    border-radius: 50px;
+    opacity: .85;
+    animation: drift linear infinite;
+  }
+  .cloud::before,.cloud::after {
+    content:'';position:absolute;background:#fff;border-radius:50%;
+  }
+  .cloud1{width:90px;height:28px;top:10px;animation-duration:22s;animation-delay:-6s;}
+  .cloud1::before{width:48px;height:48px;top:-22px;left:12px;}
+  .cloud1::after{width:34px;height:34px;top:-14px;left:42px;}
+  .cloud2{width:120px;height:34px;top:4px;animation-duration:30s;animation-delay:-14s;}
+  .cloud2::before{width:56px;height:56px;top:-26px;left:20px;}
+  .cloud2::after{width:40px;height:40px;top:-18px;left:60px;}
+  .cloud3{width:70px;height:22px;top:16px;animation-duration:18s;animation-delay:-2s;}
+  .cloud3::before{width:38px;height:38px;top:-18px;left:10px;}
+  .cloud3::after{width:26px;height:26px;top:-12px;left:36px;}
+  @keyframes drift { from{left:110%} to{left:-150px} }
+
+  /* ─── SCENE ──────────────────────────────────────── */
+  .scene {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 10px 0;
+  }
+  .buildings-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 20px;
+    padding: 0 10px;
+  }
+  .building-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .building-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: #fff;
+    border-radius: 8px 8px 0 0;
+    padding: 2px 18px;
+    letter-spacing: 1px;
+    box-shadow: 0 -2px 8px var(--shadow);
+  }
+  .building-H .building-label { background: var(--bldg-H); }
+  .building-G .building-label { background: var(--bldg-G); }
+  .building-F .building-label { background: var(--bldg-F); }
+
+  .building {
+    position: relative;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+    box-shadow: 4px 0 18px var(--shadow), -2px 0 8px var(--shadow);
+    flex-shrink: 1;
+  }
+  .building-H { background: var(--bldg-H); width: clamp(120px,26vw,280px); }
+  .building-G { background: var(--bldg-G); width: clamp(130px,30vw,320px); }
+  .building-F { background: var(--bldg-F); width: clamp(120px,26vw,280px); }
+  .building::after {
+    content:''; position:absolute;
+    right:-10px; top:0; bottom:0; width:10px;
+    opacity:.4; border-radius:0 3px 0 0;
+  }
+  .building-H::after { background: var(--wall-H); }
+  .building-G::after { background: var(--wall-G); }
+  .building-F::after { background: var(--wall-F); }
+
+  .floors {
+    display: flex;
+    flex-direction: column-reverse;
+    padding: 8px 8px 0;
+    gap: 6px;
+  }
+  .floor-row {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+  }
+
+  /* ─── WINDOW ──────────────────────────────────────── */
+  .window {
+    width: clamp(24px, 3.2vw, 36px);
+    height: clamp(30px, 4vw, 44px);
+    background: var(--win-day);
+    border-radius: 4px 4px 2px 2px;
+    border: 2px solid rgba(0,0,0,.18);
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 2px;
+  }
+  .window:hover {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 3px var(--sun), 0 4px 12px rgba(0,0,0,.25);
+    z-index: 5;
+  }
+  .window.has-pet {
+    background: var(--win-pet);
+    animation: glow-pet 2.5s ease-in-out infinite alternate;
+  }
+  @keyframes glow-pet {
+    from { box-shadow: 0 0 4px 1px rgba(6,214,160,.3); }
+    to   { box-shadow: 0 0 10px 3px rgba(6,214,160,.7); }
+  }
+  .window::before,.window::after {
+    content:''; position:absolute; background:rgba(0,0,0,.12); pointer-events:none;
+  }
+  .window::before { width:1px; top:0; bottom:0; left:50%; }
+  .window::after  { height:1px; left:0; right:0; top:50%; }
+
+  .pet-thumb {
+    width: clamp(9px,1.1vw,13px);
+    height: clamp(9px,1.1vw,13px);
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #fff;
+    position: relative;
+    z-index: 2;
+    background: var(--lavender);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(6px,.8vw,9px);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .pet-thumb img { width:100%; height:100%; object-fit:cover; }
+
+  .window-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.75);
+    color: #fff;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: .65rem;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 10;
+  }
+  .window:hover .window-tooltip { opacity: 1; }
+
+  /* ─── GROUND ─────────────────────────────────────── */
+  .ground-scene {
+    width:100%; max-width:1100px; margin: 0 auto;
+    height: 60px;
+    background: linear-gradient(180deg, var(--ground) 40%, var(--ground2) 100%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 4px;
+    border-radius: 0 0 12px 12px;
+  }
+  .tree { display:flex; flex-direction:column; align-items:center; animation: sway 4s ease-in-out infinite; transform-origin: bottom center; }
+  .tree:nth-child(2){animation-delay:-1.5s}.tree:nth-child(3){animation-delay:-3s}
+  @keyframes sway { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+  .tree-top { width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-bottom:26px solid #2d6a2d; }
+  .tree-trunk { width:6px; height:12px; background:#6b4226; }
+
+  /* ─── MODALS ─────────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .modal {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 30px 28px 24px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    animation: slideUp .25s ease;
+    position: relative;
+  }
+  @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:none;opacity:1} }
+  .modal-close {
+    position: absolute; top:14px; right:16px;
+    background: none; border: none;
+    font-size: 1.5rem; cursor: pointer;
+    color: #999; line-height:1;
+    transition: color .15s, transform .15s;
+  }
+  .modal-close:hover { color: var(--coral); transform: rotate(90deg); }
+  .modal h2 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: var(--bldg-G); margin-bottom: 18px; }
+
+  /* ─── FORM ────────────────────────────────────────── */
+  .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-weight: 700; font-size: .9rem; color: #444; }
+  .form-group input,.form-group select,.form-group textarea {
+    border: 2px solid #ddd; border-radius: 10px;
+    padding: 10px 13px;
+    font-family: 'Nunito', sans-serif; font-size: .95rem;
+    transition: border-color .2s, box-shadow .2s;
+    background: #fff; outline: none;
+  }
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus {
+    border-color: var(--mint);
+    box-shadow: 0 0 0 3px rgba(6,214,160,.18);
+  }
+  .form-group textarea { resize: vertical; min-height: 72px; }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+
+  .photo-upload-label {
+    border: 2.5px dashed #ccc; border-radius: 12px;
+    padding: 16px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s;
+    display: block; color: #888; font-size: .9rem;
+  }
+  .photo-upload-label:hover { border-color: var(--mint); background: rgba(6,214,160,.06); }
+  .photo-upload-label input { display: none; }
+  #photo-preview {
+    width: 80px; height: 80px;
+    border-radius: 50%; object-fit: cover;
+    margin: 0 auto 6px; display: block;
+    border: 3px solid var(--mint);
+  }
+
+  .species-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .species-btn {
+    padding: 8px 16px; border-radius: 50px;
+    border: 2px solid #ddd; background: #fff;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-size: .9rem; font-weight: 700;
+    transition: all .15s;
+  }
+  .species-btn:hover,.species-btn.active {
+    border-color: var(--coral); background: var(--coral); color: #fff;
+  }
+
+  .submit-btn {
+    width: 100%; padding: 14px;
+    background: var(--mint); color: #fff; border: none;
+    border-radius: 50px;
+    font-family: 'Fredoka One', cursive; font-size: 1.2rem;
+    cursor: pointer; margin-top: 10px;
+    box-shadow: 0 4px 0 #04a67e;
+    transition: transform .15s, box-shadow .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #04a67e; }
+  .submit-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #04a67e; }
+  .submit-btn:disabled { opacity: .7; cursor: not-allowed; transform: none; }
+
+  /* ─── SPINNER ────────────────────────────────────── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 3px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  .spinner.show { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── PET CARD ───────────────────────────────────── */
+  .pet-card { text-align: center; }
+  .pet-card .pet-photo {
+    width: 130px; height: 130px; border-radius: 50%;
+    object-fit: cover; border: 5px solid var(--sun);
+    margin: 0 auto 16px; display: block;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18);
+  }
+  .pet-card .pet-photo-placeholder {
+    width: 130px; height: 130px; border-radius: 50%;
+    background: var(--lavender);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem; margin: 0 auto 16px;
+    border: 5px solid var(--sun);
+  }
+  .pet-card h2 { font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--bldg-G); }
+  .pet-species-badge {
+    display: inline-block; background: var(--coral); color: #fff;
+    border-radius: 50px; padding: 3px 14px;
+    font-size: .85rem; font-weight: 700;
+    margin: 6px 0 14px;
+  }
+  .info-row { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; }
+  .info-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .info-label { font-size: .75rem; color: #999; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .info-value { font-size: 1rem; font-weight: 800; color: var(--text); }
+  .pet-description { background: #fff; border-radius: 12px; padding: 12px 16px; font-size: .95rem; color: #555; line-height: 1.5; text-align: left; margin-top: 6px; border-left: 4px solid var(--mint); }
+
+  /* ─── APT MODAL ──────────────────────────────────── */
+  .apt-modal h2 { font-family: 'Fredoka One', cursive; font-size: 1.4rem; color: var(--bldg-F); margin-bottom: 16px; }
+  .apt-pets-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  .apt-pet-card {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; transition: transform .15s;
+    padding: 10px; border-radius: 12px;
+    background: #fff; box-shadow: 0 2px 10px var(--shadow);
+    min-width: 90px;
+  }
+  .apt-pet-card:hover { transform: scale(1.06); }
+  .apt-pet-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 3px solid var(--sun);
+    background: var(--lavender);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; overflow: hidden;
+  }
+  .apt-pet-avatar img { width:100%; height:100%; object-fit:cover; }
+  .apt-pet-name { font-weight: 800; font-size: .9rem; }
+  .apt-add-here {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; padding: 10px; border-radius: 12px;
+    border: 2.5px dashed #ccc; min-width: 90px;
+    transition: border-color .2s, background .2s;
+    color: #aaa; font-size:.85rem; font-weight: 700;
+  }
+  .apt-add-here:hover { border-color: var(--mint); background: rgba(6,214,160,.06); color: var(--mint); }
+
+  /* ─── GALLERY ────────────────────────────────────── */
+  .gallery-section { max-width: 1100px; margin: 30px auto 0; padding: 0 16px 40px; }
+  .gallery-section h2 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: var(--bldg-G); margin-bottom: 14px; text-align: center; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .gallery-card {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 3px 14px var(--shadow);
+    cursor: pointer; transition: transform .2s, box-shadow .2s;
+  }
+  .gallery-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 28px rgba(0,0,0,.18); }
+  .gallery-card-img {
+    width: 100%; aspect-ratio: 1; object-fit: cover;
+    background: var(--lavender);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; overflow: hidden;
+  }
+  .gallery-card-img img { width:100%; height:100%; object-fit:cover; }
+  .gallery-card-body { padding: 10px 12px; }
+  .gallery-card-name { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: var(--text); }
+  .gallery-card-meta { font-size: .78rem; color: #888; font-weight: 600; margin-top: 2px; }
+  .gallery-empty { text-align: center; color: #aaa; font-size: 1rem; font-weight: 600; padding: 20px; grid-column: 1/-1; }
+
+  /* ─── COUNTER ────────────────────────────────────── */
+  .counter {
+    display: inline-block; background: var(--mint); color: #fff;
+    border-radius: 50px; padding: 2px 12px;
+    font-size: .85rem; font-weight: 800; margin-left: 8px; vertical-align: middle;
+  }
+
+  /* ─── ERROR TOAST ────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #2d2d2d; color: #fff;
+    padding: 12px 24px; border-radius: 50px;
+    font-weight: 700; font-size: .9rem;
+    z-index: 9999;
+    animation: toastIn .3s ease;
+    display: none;
+  }
+  .toast.show { display: block; }
+  .toast.success { background: var(--mint); }
+  .toast.error   { background: var(--coral); }
+  @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+  /* ─── CONFETTI ───────────────────────────────────── */
+  .confetti-piece {
+    position: fixed; width: 10px; height: 10px;
+    border-radius: 2px; pointer-events: none; z-index: 9999;
+    animation: confettiFall 1s ease forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity:1; }
+    100% { transform: translateY(140px) rotate(360deg); opacity:0; }
+  }
+
+  @media (max-width: 600px) {
+    .buildings-row { gap: 8px; }
+    .modal { padding: 22px 16px 18px; }
+    .form-row { flex-direction: column; gap: 0; }
+  }
+
+  /* ─── PIGEONS ────────────────────────────────────── */
+  .pigeon {
+    position: absolute;
+    z-index: 6;
+    pointer-events: none;
+    animation: pigeonFly linear infinite;
+    font-size: 1.2rem;
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,.15));
+  }
+  /* ailes qui battent : on alterne deux états via scaleY */
+  .pigeon span {
+    display: inline-block;
+    animation: wingBeat 0.35s ease-in-out infinite alternate;
+    transform-origin: center bottom;
+  }
+  @keyframes wingBeat {
+    from { transform: scaleY(1);    }
+    to   { transform: scaleY(0.45); }
+  }
+  @keyframes pigeonFly {
+    from { left: 110%; }
+    to   { left: -80px; }
+  }
+  /* vol en sens inverse */
+  .pigeon.reverse {
+    animation-name: pigeonFlyReverse;
+    transform: scaleX(-1);
+  }
+  @keyframes pigeonFlyReverse {
+    from { left: -80px; }
+    to   { left: 110%;  }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <h1>🏠 Wellcome Harmony</h1>
+  <p>Le petfolio de notre copropriété</p>
+  <div class="header-pets">🐶 🐱 🐰 🐦 🐠</div>
+  <div class="status-bar">
+    <div class="status-dot loading" id="status-dot"></div>
+    <span id="status-text">Connexion…</span>
+  </div>
+  <br>
+  <button class="add-btn" id="add-btn" onclick="openAddModal()">
+    ➕ Ajouter mon animal
+  </button>
+</header>
+
+<div class="sky-deco">
+  <div class="cloud cloud1" style="left:10%"></div>
+  <div class="cloud cloud2" style="left:55%"></div>
+  <div class="cloud cloud3" style="left:80%"></div>
+</div>
+
+<div class="scene">
+  <div class="buildings-row" id="buildings-row"></div>
+  <div class="ground-scene" id="ground-scene"></div>
+</div>
+
+<div class="gallery-section">
+  <h2>🐾 Tous les animaux <span class="counter" id="pet-count">0</span></h2>
+  <div class="gallery-grid" id="gallery-grid">
+    <div class="gallery-empty">Chargement… 🐾</div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
+    <h2>🐾 Ajouter un animal</h2>
+    <div class="form-group">
+      <label>Photo</label>
+      <label class="photo-upload-label" id="photo-label">
+        <img id="photo-preview" src="" alt="" style="display:none">
+        <div id="photo-placeholder">📷 Cliquez pour ajouter une photo</div>
+        <input type="file" id="photo-input" accept="image/*" onchange="previewPhoto(this)">
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Nom de l'animal *</label>
+      <input type="text" id="pet-name" placeholder="ex : Milo, Luna…">
+    </div>
+    <div class="form-group">
+      <label>Espèce *</label>
+      <div class="species-btns">
+        <button class="species-btn active" data-species="dog"    onclick="selectSpecies(this)">🐶 Chien</button>
+        <button class="species-btn"        data-species="cat"    onclick="selectSpecies(this)">🐱 Chat</button>
+        <button class="species-btn"        data-species="rabbit" onclick="selectSpecies(this)">🐰 Lapin</button>
+        <button class="species-btn"        data-species="bird"   onclick="selectSpecies(this)">🐦 Oiseau</button>
+        <button class="species-btn"        data-species="other"  onclick="selectSpecies(this)">🐾 Autre</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bâtiment *</label>
+        <select id="pet-building" onchange="populateSelects()">
+          <option value="H">H</option>
+          <option value="G">G</option>
+          <option value="F">F</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Étage *</label>
+        <select id="pet-floor" onchange="updateAptSelect()"></select>
+      </div>
+      <div class="form-group">
+        <label>Appartement *</label>
+        <select id="pet-apt"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Nom du/des propriétaire(s) *</label>
+      <input type="text" id="pet-owners" placeholder="ex : Marie & Paul">
+    </div>
+    <div class="form-group">
+      <label>Description <span style="color:#aaa;font-weight:400">(optionnel)</span></label>
+      <textarea id="pet-desc" placeholder="Quelques mots sur votre animal…"></textarea>
+    </div>
+    <button class="submit-btn" id="submit-btn" onclick="submitPet()">
+      <span id="submit-text">🎉 Ajouter !</span>
+      <div class="spinner" id="submit-spinner"></div>
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="apt-modal">
+  <div class="modal apt-modal">
+    <button class="modal-close" onclick="closeModal('apt-modal')">✕</button>
+    <h2 id="apt-modal-title"></h2>
+    <div class="apt-pets-grid" id="apt-pets-grid"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pet-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('pet-modal')">✕</button>
+    <div class="pet-card" id="pet-card-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  ⚙️  CONFIGURATION — À MODIFIER
+// ════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://nkgopamouwzmxjavvdzm.supabase.co';  // ← remplacer
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rZ29wYW1vdXd6bXhqYXZ2ZHptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNzEzNTYsImV4cCI6MjA5MTY0NzM1Nn0.mid1DxYFVwb4ie4fnduPZWlKs4sLgLNpzJTQGr3nsCA';                     // ← remplacer
+
+// Chaque bâtiment = tableau indexé floor 0 (RDC) → floor N
+// La valeur = nombre de fenêtres/appartements à cet étage (0 = étage sans appart, affiché vide)
+const CONFIG = {
+  buildings: {
+    H: {
+      // étage 0=RDC, 1, 2, 3, 4, 5, 6, 7, 8
+      floors: [2, 6, 7, 7, 7, 7, 7, 6, 3],
+    },
+    G: {
+      // RDC=0 appart, étages 1-8, + étage 9 décoratif sans appart
+      floors: [0, 4, 4, 3, 3, 3, 3, 3, 2, 0],
+    },
+    F: {
+      // RDC=0 appart, étages 1-8, + étage 9 décoratif sans appart
+      floors: [0, 5, 5, 5, 4, 4, 4, 4, 3, 0],
+    },
+  },
+};
+// ════════════════════════════════════════════════════════
+
+const SPECIES_EMOJI = { dog:'🐶', cat:'🐱', rabbit:'🐰', bird:'🐦', other:'🐾' };
+const SPECIES_LABEL = { dog:'Chien', cat:'Chat', rabbit:'Lapin', bird:'Oiseau', other:'Autre' };
+
+// ─── Supabase client ──────────────────────────────────
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── State ────────────────────────────────────────────
+let pets = [];
+let selectedSpecies = 'dog';
+let currentAptContext = null;
+
+// ─── Status UI ────────────────────────────────────────
+function setStatus(state, text) {
+  const dot = document.getElementById('status-dot');
+  dot.className = `status-dot ${state}`;
+  document.getElementById('status-text').textContent = text;
+}
+
+// ─── Toast ────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ─── Load pets from Supabase ──────────────────────────
+async function loadPets() {
+  setStatus('loading', 'Chargement…');
+  try {
+    const { data, error } = await db
+      .from('animals')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    pets = data || [];
+    setStatus('online', `Connecté · ${pets.length} ${pets.length > 1 ? 'animaux' : 'animal'}`);
+    refresh();
+  } catch (err) {
+    console.error(err);
+    setStatus('offline', 'Hors ligne — données locales');
+    // Fallback localStorage
+    pets = JSON.parse(localStorage.getItem('wh-pets-cache') || '[]');
+    refresh();
+    showToast('⚠️ Impossible de se connecter à la base de données', 'error');
+  }
+}
+
+// ─── Real-time subscription ───────────────────────────
+// ⚠️  Nécessite : Supabase Dashboard > Database > Replication
+//     → activer "supabase_realtime" sur la table "animaux"
+function subscribeRealtime() {
+  const channel = db
+    .channel('animals-changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'animals' },
+      payload => {
+        if (payload.eventType === 'INSERT') {
+          // Évite les doublons si l'update optimiste est déjà là
+          if (!pets.find(p => p.id === payload.new.id)) {
+            pets.unshift(payload.new);
+            refresh();
+            showToast(`🎉 ${payload.new.name} vient d'être ajouté(e) !`, 'success');
+          }
+        } else if (payload.eventType === 'DELETE') {
+          pets = pets.filter(p => p.id !== payload.old.id);
+          refresh();
+        }
+      }
+    )
+    .subscribe(status => {
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ Realtime connecté');
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        // Échec silencieux : le site fonctionne sans temps réel
+        console.warn('⚠️ Realtime indisponible — mode lecture seule au chargement');
+      }
+    });
+}
+
+// ─── Redimensionner + encoder en base64 ──────────────
+// Stockage direct en base64 dans la DB : aucun Storage bucket nécessaire.
+// Redimensionnement à 400px max pour un poids léger (~50-80 Ko).
+function resizeAndEncodePhoto(file) {
+  return new Promise((resolve, reject) => {
+    const MAX = 400;
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+        else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── Submit pet ───────────────────────────────────────
+async function submitPet() {
+  const name    = document.getElementById('pet-name').value.trim();
+  const owners  = document.getElementById('pet-owners').value.trim();
+  const building = document.getElementById('pet-building').value;
+  const floor   = parseInt(document.getElementById('pet-floor').value);
+  const apt     = parseInt(document.getElementById('pet-apt').value);
+  const desc    = document.getElementById('pet-desc').value.trim();
+  const file    = document.getElementById('photo-input').files[0];
+
+  if (!name || !owners) {
+    showToast('Merci de renseigner le nom de l\'animal et du propriétaire 🐾', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  document.getElementById('submit-text').style.display = 'none';
+  document.getElementById('submit-spinner').classList.add('show');
+  btn.disabled = true;
+
+  try {
+    let photoUrl = null;
+    if (file) {
+      photoUrl = await resizeAndEncodePhoto(file);
+    }
+
+    const newPet = {
+      name, species: selectedSpecies, building,
+      floor, apt, owners,
+      description: desc || null,
+      photo_url: photoUrl,
+    };
+
+    const { data, error } = await db
+      .from('animals')
+      .insert([newPet])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Optimistic update (realtime will also fire)
+    if (!pets.find(p => p.id === data.id)) {
+      pets.unshift(data);
+    }
+    // Cache local
+    localStorage.setItem('wh-pets-cache', JSON.stringify(pets));
+
+    closeModal('add-modal');
+    refresh();
+    spawnConfetti();
+    showToast(`🎉 ${data.name} a rejoint la communauté !`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('❌ Erreur lors de l\'ajout. Réessayez.', 'error');
+  } finally {
+    document.getElementById('submit-text').style.display = '';
+    document.getElementById('submit-spinner').classList.remove('show');
+    btn.disabled = false;
+  }
+}
+
+// ─── Build scene ──────────────────────────────────────
+function buildScene() {
+  const row = document.getElementById('buildings-row');
+  row.innerHTML = '';
+
+  Object.entries(CONFIG.buildings).forEach(([b, bldgConfig]) => {
+    const wrap = document.createElement('div');
+    wrap.className = `building-wrap building-${b}`;
+
+    const label = document.createElement('div');
+    label.className = 'building-label';
+    label.textContent = `Bât. ${b}`;
+
+    const bldg = document.createElement('div');
+    bldg.className = `building building-${b}`;
+
+    const floorsEl = document.createElement('div');
+    floorsEl.className = 'floors';
+
+    // floors[0] = RDC, floors[1] = 1er, etc. On affiche du bas vers le haut.
+    bldgConfig.floors.forEach((aptCount, floorIdx) => {
+      const row2 = document.createElement('div');
+      row2.className = 'floor-row';
+
+      if (aptCount === 0) {
+        // Étage décoratif : bande pleine sans fenêtre cliquable
+        row2.classList.add('floor-empty');
+        row2.style.cssText = 'height:clamp(30px,4vw,44px);background:rgba(0,0,0,.08);border-radius:3px;margin:0 8px;';
+      } else {
+        for (let w = 1; w <= aptCount; w++) {
+          const win = document.createElement('div');
+          win.className = 'window';
+          win.dataset.building = b;
+          win.dataset.floor = floorIdx;  // 0 = RDC
+          win.dataset.apt = w;
+
+          const tooltip = document.createElement('div');
+          tooltip.className = 'window-tooltip';
+          const floorLabel = floorIdx === 0 ? 'RDC' : `${floorIdx}e`;
+          tooltip.textContent = `${b} ${floorLabel} · Apt ${w}`;
+          win.appendChild(tooltip);
+
+          win.addEventListener('click', () => openAptModal(b, floorIdx, w));
+          row2.appendChild(win);
+        }
+      }
+      floorsEl.appendChild(row2);
+    });
+
+    bldg.appendChild(floorsEl);
+    const entrance = document.createElement('div');
+    entrance.style.cssText = 'height:18px;background:rgba(0,0,0,.15);margin:0 30%;border-radius:4px 4px 0 0;';
+    bldg.appendChild(entrance);
+
+    wrap.appendChild(label);
+    wrap.appendChild(bldg);
+    row.appendChild(wrap);
+  });
+
+  const gs = document.getElementById('ground-scene');
+  gs.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    gs.innerHTML += `<div class="tree"><div class="tree-top"></div><div class="tree-trunk"></div></div>`;
+  }
+
+  spawnPigeons();
+}
+
+function aptLabel(b, f, w) {
+  const floorLabel = f === 0 ? 'RDC' : `${f}e`;
+  return `${b} ${floorLabel} · Apt ${w}`;
+}
+
+function refreshWindows() {
+  document.querySelectorAll('.window').forEach(win => {
+    const b = win.dataset.building;
+    const f = parseInt(win.dataset.floor);
+    const a = parseInt(win.dataset.apt);
+    const aptPets = pets.filter(p => p.building === b && p.floor === f && p.apt === a);
+
+    Array.from(win.children).forEach(c => {
+      if (c.classList.contains('pet-thumb')) win.removeChild(c);
+    });
+
+    if (aptPets.length > 0) {
+      win.classList.add('has-pet');
+      aptPets.slice(0, 4).forEach(p => {
+        const thumb = document.createElement('div');
+        thumb.className = 'pet-thumb';
+        if (p.photo_url) {
+          thumb.innerHTML = `<img src="${p.photo_url}" alt="${p.name}">`;
+        } else {
+          thumb.textContent = SPECIES_EMOJI[p.species] || '🐾';
+          thumb.style.fontSize = 'clamp(6px,.7vw,8px)';
+        }
+        win.appendChild(thumb);
+      });
+    } else {
+      win.classList.remove('has-pet');
+    }
+  });
+}
+
+function refreshGallery() {
+  const grid = document.getElementById('gallery-grid');
+  document.getElementById('pet-count').textContent = pets.length;
+  if (pets.length === 0) {
+    grid.innerHTML = '<div class="gallery-empty">Aucun animal pour l\'instant — soyez le premier ! 🎉</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  pets.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'gallery-card';
+    card.onclick = () => openPetModal(p.id);
+    card.innerHTML = `
+      <div class="gallery-card-img">
+        ${p.photo_url ? `<img src="${p.photo_url}" alt="${p.name}">` : SPECIES_EMOJI[p.species]}
+      </div>
+      <div class="gallery-card-body">
+        <div class="gallery-card-name">${p.name}</div>
+        <div class="gallery-card-meta">Bât. ${p.building} · ${p.owners}</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function refresh() {
+  refreshWindows();
+  refreshGallery();
+}
+
+// ─── Selects (dynamiques selon bâtiment choisi) ───────
+function populateSelects() {
+  const building = document.getElementById('pet-building').value || 'H';
+  const floors = CONFIG.buildings[building].floors;
+
+  const floorSel = document.getElementById('pet-floor');
+  floorSel.innerHTML = '';
+  // Du haut vers le bas dans le sélecteur
+  for (let f = floors.length - 1; f >= 0; f--) {
+    if (floors[f] === 0) continue; // pas d'appart à cet étage
+    const label = f === 0 ? 'RDC' : `${f}e étage`;
+    floorSel.innerHTML += `<option value="${f}">${label}</option>`;
+  }
+  updateAptSelect();
+}
+
+function updateAptSelect() {
+  const building = document.getElementById('pet-building').value || 'H';
+  const floor = parseInt(document.getElementById('pet-floor').value);
+  const aptCount = CONFIG.buildings[building].floors[floor] || 1;
+
+  const aptSel = document.getElementById('pet-apt');
+  aptSel.innerHTML = '';
+  for (let a = 1; a <= aptCount; a++) {
+    aptSel.innerHTML += `<option value="${a}">Apt. ${a}</option>`;
+  }
+}
+
+function selectSpecies(btn) {
+  document.querySelectorAll('.species-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedSpecies = btn.dataset.species;
+}
+
+function previewPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('photo-preview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('photo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// ─── Modals ───────────────────────────────────────────
+function openAddModal(aptContext) {
+  currentAptContext = aptContext || null;
+  populateSelects();
+  if (aptContext) {
+    document.getElementById('pet-building').value = aptContext.building;
+    document.getElementById('pet-floor').value    = aptContext.floor;
+    document.getElementById('pet-apt').value      = aptContext.apt;
+  }
+  document.getElementById('pet-name').value   = '';
+  document.getElementById('pet-owners').value = '';
+  document.getElementById('pet-desc').value   = '';
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-placeholder').style.display = '';
+  document.getElementById('photo-input').value = '';
+  document.querySelectorAll('.species-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-species="dog"]').classList.add('active');
+  selectedSpecies = 'dog';
+  openModal('add-modal');
+}
+
+function openAptModal(building, floor, apt) {
+  const aptPets = pets.filter(p => p.building === building && p.floor === floor && p.apt === apt);
+  document.getElementById('apt-modal-title').textContent = `Appartement ${aptLabel(building, floor, apt)}`;
+  const grid = document.getElementById('apt-pets-grid');
+  grid.innerHTML = '';
+  aptPets.forEach(p => {
+    const c = document.createElement('div');
+    c.className = 'apt-pet-card';
+    c.onclick = () => { closeModal('apt-modal'); openPetModal(p.id); };
+    c.innerHTML = `
+      <div class="apt-pet-avatar">
+        ${p.photo_url ? `<img src="${p.photo_url}" alt="${p.name}">` : SPECIES_EMOJI[p.species]}
+      </div>
+      <div class="apt-pet-name">${p.name}</div>`;
+    grid.appendChild(c);
+  });
+  const add = document.createElement('div');
+  add.className = 'apt-add-here';
+  add.innerHTML = `<div style="font-size:1.8rem">➕</div>Ajouter ici`;
+  add.onclick = () => { closeModal('apt-modal'); openAddModal({building, floor, apt}); };
+  grid.appendChild(add);
+  openModal('apt-modal');
+}
+
+function openPetModal(id) {
+  const p = pets.find(x => x.id === id);
+  if (!p) return;
+  const content = document.getElementById('pet-card-content');
+  content.innerHTML = `
+    ${p.photo_url
+      ? `<img class="pet-photo" src="${p.photo_url}" alt="${p.name}">`
+      : `<div class="pet-photo-placeholder">${SPECIES_EMOJI[p.species]}</div>`}
+    <h2>${p.name}</h2>
+    <div class="pet-species-badge">${SPECIES_EMOJI[p.species]} ${SPECIES_LABEL[p.species]}</div>
+    <div class="info-row">
+      <div class="info-item"><span class="info-label">Bâtiment</span><span class="info-value">${p.building}</span></div>
+      <div class="info-item"><span class="info-label">Appartement</span><span class="info-value">${aptLabel(p.building, p.floor, p.apt)}</span></div>
+      <div class="info-item"><span class="info-label">Famille</span><span class="info-value">${p.owners}</span></div>
+    </div>
+    ${p.description ? `<div class="pet-description">💬 ${p.description}</div>` : ''}`;
+  openModal('pet-modal');
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ─── Confetti ─────────────────────────────────────────
+function spawnConfetti() {
+  const colors = ['#ffd166','#ff6b6b','#06d6a0','#c3b1e1','#457b9d'];
+  for (let i = 0; i < 20; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `left:${20+Math.random()*60}%;top:${20+Math.random()*30}%;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg);animation-delay:${Math.random()*.4}s;`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 1200);
+  }
+}
+
+// ─── Pigeons ─────────────────────────────────────────
+function spawnPigeons() {
+  const sky = document.querySelector('.sky-deco');
+  if (!sky) return;
+  // Remove old ones
+  sky.querySelectorAll('.pigeon').forEach(p => p.remove());
+
+  const count = 5;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'pigeon' + (Math.random() > 0.5 ? ' reverse' : '');
+    // Position verticale aléatoire dans le ciel
+    p.style.top = (8 + Math.random() * 65) + '%';
+    // Durée entre 12 et 28s, décalage aléatoire
+    const dur  = 12 + Math.random() * 16;
+    const delay = -(Math.random() * dur); // démarrage à mi-chemin pour ne pas tous apparaître en même temps
+    p.style.animationDuration = dur + 's';
+    p.style.animationDelay    = delay + 's';
+    // Taille légèrement variable
+    p.style.fontSize = (0.9 + Math.random() * 0.7) + 'rem';
+    // Emoji pigeon avec ailes animées
+    p.innerHTML = '<span>🐦</span>';
+    sky.appendChild(p);
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────
+buildScene();
+populateSelects();
+loadPets();
+subscribeRealtime();
+</script>
+</body>
+</html>
