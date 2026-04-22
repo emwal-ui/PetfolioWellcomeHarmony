@@ -516,6 +516,31 @@
     border-radius: 2px; pointer-events: none; z-index: 9999;
     animation: confettiFall 1s ease forwards;
   }
+  /* ─── BOUTONS MODIFIER / SUPPRIMER ──────────────── */
+  .pet-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 18px;
+  }
+  .btn-edit {
+    flex: 1; padding: 11px;
+    background: var(--sun); color: var(--text);
+    border: none; border-radius: 50px;
+    font-family: 'Fredoka One', cursive; font-size: 1rem;
+    cursor: pointer; box-shadow: 0 3px 0 #e6b800;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-edit:hover { transform: translateY(-2px); box-shadow: 0 5px 0 #e6b800; }
+  .btn-delete {
+    flex: 1; padding: 11px;
+    background: var(--coral); color: #fff;
+    border: none; border-radius: 50px;
+    font-family: 'Fredoka One', cursive; font-size: 1rem;
+    cursor: pointer; box-shadow: 0 3px 0 #c0392b;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-delete:hover { transform: translateY(-2px); box-shadow: 0 5px 0 #c0392b; }
   @keyframes confettiFall {
     0%   { transform: translateY(0) rotate(0deg); opacity:1; }
     100% { transform: translateY(140px) rotate(360deg); opacity:0; }
@@ -641,6 +666,10 @@
         <select id="pet-apt"></select>
       </div>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+      </div>
+    </div>
     <div class="form-group">
       <label>Nom du/des propriétaire(s) *</label>
       <input type="text" id="pet-owners" placeholder="ex : Marie & Paul">
@@ -670,7 +699,66 @@
     <div class="pet-card" id="pet-card-content"></div>
   </div>
 </div>
-
+<!-- Modal Modifier -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    <h2>✏️ Modifier</h2>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label>Photo</label>
+      <label class="photo-upload-label">
+        <img id="edit-photo-preview" src="" alt="" style="display:none">
+        <div id="edit-photo-placeholder">📷 Cliquez pour changer la photo</div>
+        <input type="file" id="edit-photo-input" accept="image/*" onchange="previewEditPhoto(this)">
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Nom de l'animal *</label>
+      <input type="text" id="edit-name" placeholder="ex : Milo, Luna…">
+    </div>
+    <div class="form-group">
+      <label>Espèce *</label>
+      <div class="species-btns" id="edit-species-btns">
+        <button class="species-btn" data-species="dog"    onclick="selectEditSpecies(this)">🐶 Chien</button>
+        <button class="species-btn" data-species="cat"    onclick="selectEditSpecies(this)">🐱 Chat</button>
+        <button class="species-btn" data-species="rabbit" onclick="selectEditSpecies(this)">🐰 Lapin</button>
+        <button class="species-btn" data-species="bird"   onclick="selectEditSpecies(this)">🐦 Oiseau</button>
+        <button class="species-btn" data-species="other"  onclick="selectEditSpecies(this)">🐾 Autre</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bâtiment *</label>
+        <select id="edit-building" onchange="populateEditSelects()">
+          <option value="H">H</option>
+          <option value="G">G</option>
+          <option value="F">F</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Étage *</label>
+        <select id="edit-floor" onchange="updateEditAptSelect()"></select>
+      </div>
+      <div class="form-group">
+        <label>Appartement *</label>
+        <select id="edit-apt"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Nom du/des propriétaire(s) *</label>
+      <input type="text" id="edit-owners" placeholder="ex : Marie & Paul">
+    </div>
+    <div class="form-group">
+      <label>Description <span style="color:#aaa;font-weight:400">(optionnel)</span></label>
+      <textarea id="edit-desc" placeholder="Quelques mots sur votre animal…"></textarea>
+    </div>
+    <button class="submit-btn" id="edit-submit-btn" onclick="submitEdit()">
+      <span id="edit-submit-text">💾 Enregistrer</span>
+      <div class="spinner" id="edit-submit-spinner"></div>
+    </button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1020,10 +1108,48 @@ function populateSelects() {
 
 function updateAptSelect() {
   const building = document.getElementById('pet-building').value || 'H';
-  const floor = parseInt(document.getElementById('pet-floor').value);
-  const aptCount = CONFIG.buildings[building].floors[floor] || 1;
+  const floorVal = document.getElementById('pet-floor').value;
+  const floor = floorVal !== '' ? parseInt(floorVal) : null;
+  const floors = CONFIG.buildings[building].floors;
+  // Si floor invalide, prend le premier étage qui a des apparts
+  const aptCount = (floor !== null && floors[floor]) ? floors[floor]
+    : floors.find(n => n > 0) || 1;
 
   const aptSel = document.getElementById('pet-apt');
+  aptSel.innerHTML = '';
+  for (let a = 1; a <= aptCount; a++) {
+    aptSel.innerHTML += `<option value="${a}">Apt. ${a}</option>`;
+  }
+}
+function populateEditSelects(targetFloor, targetApt) {
+  const building = document.getElementById('edit-building').value || 'H';
+  const floors = CONFIG.buildings[building].floors;
+  const floorSel = document.getElementById('edit-floor');
+  floorSel.innerHTML = '';
+  for (let f = floors.length - 1; f >= 0; f--) {
+    if (floors[f] === 0) continue;
+    const label = f === 0 ? 'RDC' : `${f}e étage`;
+    floorSel.innerHTML += `<option value="${f}">${label}</option>`;
+  }
+  // Si un étage cible est fourni, on le sélectionne avant de mettre à jour les apparts
+  if (targetFloor !== undefined) {
+    floorSel.value = targetFloor;
+  }
+  updateEditAptSelect();
+  // Puis on sélectionne l'appartement cible
+  if (targetApt !== undefined) {
+    document.getElementById('edit-apt').value = targetApt;
+  }
+}
+
+function updateEditAptSelect() {
+  const building = document.getElementById('edit-building').value || 'H';
+  const floorVal = document.getElementById('edit-floor').value;
+  const floor = floorVal !== '' ? parseInt(floorVal) : null;
+  const floors = CONFIG.buildings[building].floors;
+  const aptCount = (floor !== null && floors[floor]) ? floors[floor]
+    : floors.find(n => n > 0) || 1;
+  const aptSel = document.getElementById('edit-apt');
   aptSel.innerHTML = '';
   for (let a = 1; a <= aptCount; a++) {
     aptSel.innerHTML += `<option value="${a}">Apt. ${a}</option>`;
@@ -1108,7 +1234,11 @@ function openPetModal(id) {
       <div class="info-item"><span class="info-label">Appartement</span><span class="info-value">${aptLabel(p.building, p.floor, p.apt)}</span></div>
       <div class="info-item"><span class="info-label">Famille</span><span class="info-value">${p.owners}</span></div>
     </div>
-    ${p.description ? `<div class="pet-description">💬 ${p.description}</div>` : ''}`;
+    ${p.description ? `<div class="pet-description">💬 ${p.description}</div>` : ''}
+    <div class="pet-actions">
+      <button class="btn-edit"   onclick="openEditModal('${p.id}')">✏️ Modifier</button>
+      <button class="btn-delete" onclick="deletePet('${p.id}')">🗑️ Supprimer</button>
+    </div>`;
   openModal('pet-modal');
 }
 
@@ -1156,7 +1286,110 @@ function spawnPigeons() {
     sky.appendChild(p);
   }
 }
+// ─── Modifier ─────────────────────────────────────────
+let editSelectedSpecies = 'dog';
 
+function openEditModal(id) {
+  const p = pets.find(x => x.id === id);
+  if (!p) return;
+  editSelectedSpecies = p.species;
+  document.getElementById('edit-id').value     = id;
+  document.getElementById('edit-name').value   = p.name;
+  document.getElementById('edit-owners').value = p.owners;
+  document.getElementById('edit-desc').value   = p.description || '';
+  const prev = document.getElementById('edit-photo-preview');
+  if (p.photo_url) {
+    prev.src = p.photo_url; prev.style.display = 'block';
+    document.getElementById('edit-photo-placeholder').style.display = 'none';
+  } else {
+    prev.style.display = 'none';
+    document.getElementById('edit-photo-placeholder').style.display = '';
+  }
+  document.getElementById('edit-photo-input').value = '';
+  document.getElementById('edit-building').value = p.building;
+  populateEditSelects(p.floor, p.apt);  // on passe étage et apt cibles
+  document.querySelectorAll('#edit-species-btns .species-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.species === p.species);
+  });
+  closeModal('pet-modal');
+  openModal('edit-modal');
+}
+
+function selectEditSpecies(btn) {
+  document.querySelectorAll('#edit-species-btns .species-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  editSelectedSpecies = btn.dataset.species;
+}
+
+function previewEditPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('edit-photo-preview');
+    img.src = e.target.result; img.style.display = 'block';
+    document.getElementById('edit-photo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function submitEdit() {
+  const id     = document.getElementById('edit-id').value;
+  const name   = document.getElementById('edit-name').value.trim();
+  const owners = document.getElementById('edit-owners').value.trim();
+  const desc   = document.getElementById('edit-desc').value.trim();
+  const file   = document.getElementById('edit-photo-input').files[0];
+  if (!name || !owners) { showToast('Nom et propriétaire requis 🐾', 'error'); return; }
+  const btn = document.getElementById('edit-submit-btn');
+  document.getElementById('edit-submit-text').style.display = 'none';
+  document.getElementById('edit-submit-spinner').classList.add('show');
+  btn.disabled = true;
+  try {
+    const p = pets.find(x => x.id === id);
+    let photoUrl = p.photo_url;
+    if (file) photoUrl = await resizeAndEncodePhoto(file);
+    const building = document.getElementById('edit-building').value;
+    const floor    = parseInt(document.getElementById('edit-floor').value);
+    const apt      = parseInt(document.getElementById('edit-apt').value);
+    const { data, error } = await db.from('animals')
+      .update({ name, species: editSelectedSpecies, building, floor, apt, owners, description: desc || null, photo_url: photoUrl })
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    if (!data || data.length === 0) throw new Error('Aucune ligne modifiée');
+    const updated = data[0];
+    const idx = pets.findIndex(x => x.id === id);
+    if (idx !== -1) pets[idx] = { ...pets[idx], ...updated };
+    localStorage.setItem('wh-pets-cache', JSON.stringify(pets));
+    closeModal('edit-modal');
+    refresh();
+    showToast(`✅ ${updated.name} mis à jour !`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('❌ Erreur lors de la modification', 'error');
+  } finally {
+    document.getElementById('edit-submit-text').style.display = '';
+    document.getElementById('edit-submit-spinner').classList.remove('show');
+    btn.disabled = false;
+  }
+}
+
+// ─── Supprimer ────────────────────────────────────────
+async function deletePet(id) {
+  const p = pets.find(x => x.id === id);
+  if (!p) return;
+  try {
+    const { error } = await db.from('animals').delete().eq('id', id);
+    if (error) throw error;
+    pets = pets.filter(x => x.id !== id);
+    localStorage.setItem('wh-pets-cache', JSON.stringify(pets));
+    closeModal('pet-modal');
+    refresh();
+    showToast(`🗑️ ${p.name} supprimé(e)`, '');
+  } catch (err) {
+    console.error(err);
+    showToast('❌ Erreur lors de la suppression', 'error');
+  }
+}
 // ─── Init ─────────────────────────────────────────────
 buildScene();
 populateSelects();
